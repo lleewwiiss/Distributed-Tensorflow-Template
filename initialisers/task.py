@@ -1,6 +1,6 @@
 from data_loader.tfrecord_loader import TFRecordDataLoader
-from models.example_model import Mnist
-from trainers.example_train import ExampleTrainer
+from models.model import RawModel
+from trainers.train import RawTrainer
 from utils.utils import get_args, process_config
 
 
@@ -16,7 +16,7 @@ def init() -> None:
     config = {**config, **args}
 
     # initialise model
-    model = Mnist(config)
+    model = RawModel(config)
     # create your data generators for each mode
     train_data = TFRecordDataLoader(config, mode="train")
 
@@ -25,7 +25,7 @@ def init() -> None:
     test_data = TFRecordDataLoader(config, mode="test")
 
     # initialise the estimator
-    trainer = ExampleTrainer(config, model, train_data, val_data, test_data)
+    trainer = RawTrainer(config, model, train_data, val_data, test_data)
 
     # start training
     trainer.run()

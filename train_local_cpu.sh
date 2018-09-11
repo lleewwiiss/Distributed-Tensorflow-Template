@@ -1,12 +1,8 @@
 #!/bin/bash
 if [ $# -ne 2 ]; then
-    echo $0: usage: train_local_single envname gpu_id
+    echo $0: usage: train_local_single envname
     exit 1
 fi
-
-# ensure you are linked to cuda on the machine
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
-export CUDA_HOME=/usr/local/cuda
 
 # needed to use virtualenvs
 set -euo pipefail
@@ -30,7 +26,6 @@ EVAL_FILES="data/val.tfrecords"
 TEST_FILES="data/test.tfrecords"
 # END OF VARIABLES
 
-
 # get current working directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -43,7 +38,7 @@ JOB_DIR=$DIR/jobs/$JOB_NAME
 
 # Add notes to the log file based on the current information about this training job close vim to start training
 # useful if you are running lots of different experiments and you forget what values you used
-echo "---  
+echo "---
 ## $JOB_NAME" >> training_log.md
 echo "Learning Rate: $LR" >> training_log.md
 echo "Epochs: $EPOCHS" >> training_log.md
@@ -60,7 +55,6 @@ source $1/bin/activate
 set -u
 
 # start training
-export CUDA_VISIBLE_DEVICES="$1" #SET TO GPU number
 python3 -m initialisers.task \
         --job-dir ${JOB_DIR} \
         --train-batch-size ${TRAIN_BATCH} \

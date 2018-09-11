@@ -11,25 +11,25 @@ export CUDA_HOME=/usr/local/cuda
 # needed to use virtualenvs
 set -euo pipefail
 
-# create a job name for the this run
+
+# UPDATE ALL VARIABLES HERE
 prefix="example"
 now=$(date +"%Y%m%d_%H_%M_%S")
 JOB_NAME=${1-"${prefix}_${now}"}
-
 # link to a bucket on gsp
 GCS_BUCKET="gs://example-bucket/"
-
 # Batch size
-BATCH=512
+TRAIN_BATCH=32
+EVAL_BATCH=32
 # learning rate
 LR="0.001"
 # number of epochs
 EPOCHS="100"
-
 # locations locally or on the cloud for your files
 TRAIN_FILES="data/train.tfrecords"
 EVAL_FILES="data/val.tfrecords"
 TEST_FILES="data/test.tfrecords"
+# END OF VARIABLES
 
 # get current working directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

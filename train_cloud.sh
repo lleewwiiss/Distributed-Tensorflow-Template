@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
-prefix="mnist-train"
+# UPDATE ALL VARIABLES HERE
+prefix="example"
 now=$(date +"%Y%m%d_%H_%M_%S")
 JOB_NAME=${1-"${prefix}_${now}"}
-
+# link to a bucket on gsp
 GCS_BUCKET="gs://example-bucket/"
-
 # Batch size
-BATCH=4
+TRAIN_BATCH=32
+EVAL_BATCH=32
 # learning rate
-LR="0.1"
+LR="0.001"
 # number of epochs
 EPOCHS="100"
-
+# locations locally or on the cloud for your files
 TRAIN_FILES="${GCS_BUCKET}data/train.tfrecords"
 EVAL_FILES="${GCS_BUCKET}data/val.tfrecords"
+# END OF VARIABLES
 
 gcloud ml-engine jobs submit training "${JOB_NAME}" \
-    --job-dir "${GCS_BUCKETBATCH}-${BATCH}-LR-${LR}" \
+    --job-dir "${GCS_BUCKET}BATCH-${BATCH}-LR-${LR}-${DATE}" \
     --package-path initialisers \
     --module-name "initialisers.task" \
     --region us-central1 \

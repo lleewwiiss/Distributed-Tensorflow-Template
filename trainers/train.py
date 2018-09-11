@@ -4,7 +4,7 @@ from models.model import RawModel
 from data_loader.tfrecord_loader import TFRecordDataLoader
 
 
-class ExampleTrainer(BaseTrain):
+class RawTrainer(BaseTrain):
     def __init__(
         self,
         config: dict,
