@@ -31,7 +31,7 @@ class Mnist(BaseModel):
 
         # define model predictions
         predictions = {
-            "classes": tf.argmax(input=logits, axis=1),
+            "class": tf.argmax(input=logits, axis=1),
             "probabilities": tf.nn.softmax(logits),
         }
 
@@ -40,7 +40,7 @@ class Mnist(BaseModel):
             # define what to output during serving
             export_outputs = {
                 "labels": tf.estimator.export.PredictOutput(
-                    {"label": predictions["classes"], "id": features["id"]}
+                    {"id": features["id"], "label": predictions["class"]}
                 )
             }
             return tf.estimator.EstimatorSpec(
@@ -72,7 +72,7 @@ class Mnist(BaseModel):
         # collect operations which need updating before back-prob e.g. Batch norm
         extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-        # create learning rate variable for hyper param tuning
+        # create learning rate variable for hyperparameter tuning
         lr = tf.Variable(
             initial_value=self.config["learning_rate"], name="learning-rate"
         )
@@ -80,7 +80,7 @@ class Mnist(BaseModel):
         # initialise optimiser
         optimizer = tf.train.AdamOptimizer(lr)
 
-        # Do these operations after updating the extra ops
+        # Do these operations after updating the extra ops due to BatchNorm
         with tf.control_dependencies(extra_update_ops):
             train_op = optimizer.minimize(
                 loss,
@@ -103,7 +103,7 @@ def _fc_block(x: tf.Tensor, size: int, is_training: bool, drop: float) -> tf.Ten
     x = tf.layers.Dense(size)(x)
     x = tf.layers.BatchNormalization(fused=True)(x, training=is_training)
     x = tf.nn.relu(x)
-    return tf.layers.dropout(x, drop, training=is_training)
+    return tf.layers.Dropout(drop)(x, training=is_training)
 
 
 def _conv_block(
@@ -126,7 +126,7 @@ def _conv_block(
 
 def _create_model(x: tf.Tensor, drop: float, is_training: bool) -> tf.Tensor:
     """
-    A basic deep CNN used to train the MNIST classifer
+    A basic deep CNN used to train the MNIST classifier
     :param x: input data
     :param drop: percentage of data to drop during dropout
     :param is_training: flag if currently training
@@ -140,11 +140,11 @@ def _create_model(x: tf.Tensor, drop: float, is_training: bool) -> tf.Tensor:
     for i, l in enumerate(_layers):
         x = _conv_block(x, l, _filters[i], is_training)
 
-    x = tf.layers.flatten(x)
+    x = tf.layers.Flatten()(x)
     _fc_size = [1024]
 
     # create the fully connected blocks
     for s in _fc_size:
         x = _fc_block(x, s, is_training, drop)
-    # add an output layer
+    # add an output layer (10 classes, one output for each)
     return tf.layers.Dense(10)(x)

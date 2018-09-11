@@ -2,3 +2,4 @@ black
 pre-commit
 mypy
 flake8
+tensorflow>=1.8

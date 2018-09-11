@@ -1,8 +1,8 @@
 import tensorflow as tf
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Sized
 
 
-class DataLoader:
+class DataLoader(Sized):
     """
     The parent class of your data loaders, all data loaders should implement an input_function which creates a
     tf.Dataset and also a parsing function, which is used to read in data. It is recommended
@@ -32,5 +32,13 @@ class DataLoader:
         input files are TFRecords.
 
         :param example: the location of the data to parse the example from
+        """
+        raise NotImplementedError
+
+    def __len__(self) -> int:
+        """
+        Get number of records in the dataset
+        See example_train.py for example implementation
+        :return: number of samples in all tfrecord files
         """
         raise NotImplementedError

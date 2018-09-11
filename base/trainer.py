@@ -1,5 +1,6 @@
 import tensorflow as tf
 from base import data_loader, model
+from typing import Callable
 
 
 class BaseTrain:
@@ -40,3 +41,12 @@ class BaseTrain:
         :param estimator: your estimator function
         """
         raise NotImplementedError
+
+    def _predict(self, estimator: tf.estimator.Estimator, pred_fn: Callable) -> list:
+        """
+        Function to yield prediction results from the model
+        :param estimator: your estimator function
+        :param pred_fn: input_fn associated with prediction dataset
+        :return: a list containing a prediction for each batch in the dataset
+        """
+        return list(estimator.predict(input_fn=pred_fn, yield_single_examples=False))

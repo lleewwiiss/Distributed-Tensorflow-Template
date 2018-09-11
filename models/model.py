@@ -3,7 +3,7 @@ from base.model import BaseModel
 from typing import Dict
 
 
-class Mnist(BaseModel):
+class RawModel(BaseModel):
     def __init__(self, config: dict) -> None:
         """
         :param config: global configuration

@@ -28,7 +28,16 @@ class ExampleTrainer(BaseTrain):
         # allow memory usage to me scaled based on usage
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
-        run_config = tf.estimator.RunConfig(session_config=config)
+
+        # get number of steps required for one pass of data
+        steps_pre_epoch = len(self.train) / self.config["train_batch_size"]
+        # save_checkpoints_steps is number of batches before eval, log is number of steps in epoch
+        run_config = tf.estimator.RunConfig(
+            session_config=config,
+            save_checkpoints_steps=steps_pre_epoch
+            * 10,  # number of batches before eval/checkpoint
+            log_step_count_steps=steps_pre_epoch,
+        )  # number of steps in epoch
         # set output directory
         run_config = run_config.replace(model_dir=self.config["job_dir"])
 
@@ -36,20 +45,21 @@ class ExampleTrainer(BaseTrain):
         estimator = tf.estimator.Estimator(model_fn=self.model.model, config=run_config)
 
         # create train and eval specs for estimator, it will automatically convert the tf.Dataset into an input_fn
-        train_spec = tf.estimator.TrainSpec(lambda: self.train.input_fn())
-
-        # set the time between evaluations - throttle_secs
-        eval_spec = tf.estimator.EvalSpec(
-            lambda: self.val.input_fn(),
-            steps=self.config["eval_steps"],
-            throttle_secs=self.config["throttle_secs"],
+        train_spec = tf.estimator.TrainSpec(
+            lambda: self.train.input_fn(),
+            max_steps=self.config["num_epochs"] * steps_pre_epoch,
         )
+
+        eval_spec = tf.estimator.EvalSpec(lambda: self.val.input_fn())
 
         # initialise a wrapper to do training and evaluation, this also handles exporting checkpoints/tensorboard info
         tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
 
         # after training export the final model for use in tensorflow serving
         self._export_model(estimator, self.config["export_path"])
+
+        # get results after training and exporting model
+        self._predict(estimator, self.pred.input_fn)
 
     def _export_model(
         self, estimator: tf.estimator.Estimator, save_location: str

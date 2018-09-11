@@ -3,6 +3,7 @@ import tensorflow as tf
 import multiprocessing
 from typing import Tuple, Dict
 import os
+import random
 
 
 class TFRecordDataLoader(DataLoader):
@@ -45,9 +46,7 @@ class TFRecordDataLoader(DataLoader):
         if self.mode == "train":
             # shuffles and repeats a Dataset returning a new permutation for each epoch. with serialise compatibility
             dataset = dataset.apply(
-                tf.contrib.data.shuffle_and_repeat(
-                    buffer_size=self.batch_size * 10, count=self.config["num_epochs"]
-                )
+                tf.contrib.data.shuffle_and_repeat(buffer_size=self.batch_size * 10)
             )
         else:
             dataset = dataset.repeat(self.config["num_epochs"])
@@ -71,10 +70,12 @@ class TFRecordDataLoader(DataLoader):
                 "label": tf.FixedLenFeature(shape=[1], dtype=tf.int64),
             }
             example = tf.parse_single_example(example, features=features)
+
             if self.mode == "train":
                 input_data = self._augment(example["image"])
             else:
                 input_data = example["image"]
+
             return {"input": input_data}, example["label"]
 
     @staticmethod
@@ -84,4 +85,27 @@ class TFRecordDataLoader(DataLoader):
         :param example: parsed input example
         :return: the same input example but possibly augmented
         """
+        # random rotation
+        if random.uniform(0, 1) > 0.5:
+            example = tf.contrib.image.rotate(
+                example, tf.random_uniform((), minval=-0.2, maxval=0.2)
+            )
+        # random noise
+        if random.uniform(0, 1) > 0.5:
+            noise = tf.random_normal(
+                shape=tf.shape(example), mean=0.0, stddev=0.2, dtype=tf.float32
+            )
+            example = example + noise
+            example = tf.clip_by_value(example, 0.0, 255.0)
+            # random flip
+            example = tf.image.random_flip_up_down(example)
         return tf.image.random_flip_left_right(example)
+
+    def __len__(self) -> int:
+        """
+        Get number of records in the dataset
+        :return: number of samples in all tfrecord files
+        """
+        return sum(
+            1 for fn in self.file_names for _ in tf.python_io.tf_record_iterator(fn)
+        )

@@ -13,7 +13,7 @@ set -euo pipefail
 
 # create a job name for the this run
 prefix="example"
-now=$(date +"%Y%m%d_%H:%M:%S")
+now=$(date +"%Y%m%d_%H_%M_%S")
 JOB_NAME=${1-"${prefix}_${now}"}
 
 # link to a bucket on gsp
@@ -55,9 +55,10 @@ echo "### Results
 vim + training_log.md
 
 # Setup the distributed workflow. Ideally you would like at least twice as many workers as parameter servers, and
-# each worker have a gpu associate with it, ps = parameter server this doesn't necessarily need a GPU
+# each worker have a gpu associate with it, ps = parameter server
 
-# This is an example for 3 GPUS, mocking the cloud training environment. The two works use 2 GPUs and the master 1.
+# This is an example for 3 GPUS, mocking the cloud training environment. The two workers use 2 GPUs and the master 1.
+# Make sure specified ports are not being used
 config="
 {
     \"master\": [\"localhost:27182\"],

@@ -13,7 +13,7 @@ set -euo pipefail
 
 # create a job name for the this run
 prefix="example"
-now=$(date +"%Y%m%d_%H:%M:%S")
+now=$(date +"%Y%m%d_%H_%M_%S")
 JOB_NAME=${1-"${prefix}_${now}"}
 
 # link to a bucket on gsp

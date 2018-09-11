@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-prefix="example-train"
+prefix="mnist-train"
 now=$(date +"%Y%m%d_%H_%M_%S")
 JOB_NAME=${1-"${prefix}_${now}"}
 
@@ -15,8 +15,8 @@ EPOCHS="100"
 TRAIN_FILES="${GCS_BUCKET}data/train.tfrecords"
 EVAL_FILES="${GCS_BUCKET}data/val.tfrecords"
 
-gcloud ml-engine jobs submit training "$JOB_NAME" \
-    --job-dir "$GCS_BUCKETBATCH-$BATCH-LR-$LR" \
+gcloud ml-engine jobs submit training "${JOB_NAME}" \
+    --job-dir "${GCS_BUCKETBATCH}-${BATCH}-LR-${LR}" \
     --package-path initialisers \
     --module-name "initialisers.task" \
     --region us-central1 \

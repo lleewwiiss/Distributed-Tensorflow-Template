@@ -37,24 +37,21 @@ def get_args() -> dict:
         required=True,
     )
     parser.add_argument(
-        "--train-batch-size", help="Batch size for training steps", type=int, default=40
-    )
-    parser.add_argument(
-        "--throttle-secs",
-        help="""Do not re-evaluate unless the last evaluation was started at least
-        this many seconds ago. Of course, evaluation does not occur if no new
-        checkpoints are available, hence, this is the minimum.s""",
+        "--train-batch-size",
+        help="""Batch size for training steps""",
         type=int,
-        default=600,
+        default=32,
     )
     parser.add_argument(
         "--eval-batch-size",
         help="Batch size for evaluation steps",
         type=int,
-        default=40,
+        default=32,
     )
     parser.add_argument(
-        "--export-path", type=str, help="""Where to export the saved model to"""
+        "--export-path",
+        type=str,
+        help="""Where to export the saved model to locally or on GCP""",
     )
 
     parser.add_argument(
@@ -87,44 +84,9 @@ def get_args() -> dict:
         default="DEBUG",
         help="Set logging verbosity",
     )
-    # Experiment arguments
-    parser.add_argument(
-        "--eval-delay-secs",
-        help="How long to wait before running first evaluation",
-        default=180,
-        type=int,
-    )
+
     parser.add_argument(
         "--keep-prob", help="keep probability for dropout", default=0.5, type=int
-    )
-    parser.add_argument(
-        "--min-eval-frequency",
-        help="Minimum number of training steps between evaluations",
-        default=100,
-        type=int,
-    )
-    parser.add_argument(
-        "--max-steps",
-        help="""\
-        Steps to run the training job for. If --num-epochs is not specified,
-        this must be. Otherwise the training job will run indefinitely.\
-        """,
-        type=int,
-    )
-    parser.add_argument(
-        "--eval-steps",
-        help="""\
-        Number of steps to run evaluation for at each checkpoint.
-        If unspecified will run until the input from --eval-files is exhausted
-        """,
-        default=None,
-        type=int,
-    )
-    parser.add_argument(
-        "--export-format",
-        help="The input format of the exported SavedModel binary",
-        choices=["JSON", "CSV", "EXAMPLE"],
-        default="EXAMPLE",
     )
 
     args, unknown = parser.parse_known_args()
