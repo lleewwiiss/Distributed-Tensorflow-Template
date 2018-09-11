@@ -44,9 +44,11 @@ class TFRecordDataLoader(DataLoader):
 
         # only shuffle training data
         if self.mode == "train":
-            # shuffles and repeats a Dataset returning a new permutation for each epoch. with serialise compatibility
+            # shuffles and repeats a Dataset returning a new permutation for each epoch. with serialised compatibility
             dataset = dataset.apply(
-                tf.contrib.data.shuffle_and_repeat(buffer_size=self.batch_size * 10)
+                tf.contrib.data.shuffle_and_repeat(
+                    buffer_size=len(self) // self.config["train_batch_size"]
+                )
             )
         else:
             dataset = dataset.repeat(self.config["num_epochs"])
@@ -65,6 +67,7 @@ class TFRecordDataLoader(DataLoader):
         # do parsing on the cpu
         with tf.device("/cpu:0"):
             # define input shapes
+            # TODO: update this for your data set
             features = {
                 "image": tf.FixedLenFeature(shape=[28, 28, 1], dtype=tf.float32),
                 "label": tf.FixedLenFeature(shape=[1], dtype=tf.int64),
@@ -92,11 +95,12 @@ class TFRecordDataLoader(DataLoader):
             )
         # random noise
         if random.uniform(0, 1) > 0.5:
+            # assumes values are normalised between 0 and 1
             noise = tf.random_normal(
                 shape=tf.shape(example), mean=0.0, stddev=0.2, dtype=tf.float32
             )
             example = example + noise
-            example = tf.clip_by_value(example, 0.0, 255.0)
+            example = tf.clip_by_value(example, 0.0, 1.0)
             # random flip
             example = tf.image.random_flip_up_down(example)
         return tf.image.random_flip_left_right(example)

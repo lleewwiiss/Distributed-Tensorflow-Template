@@ -25,6 +25,8 @@ class RawModel(BaseModel):
 
         # get input data
         x = features["input"]
+
+        # TODO: create graph
         # initialise model architecture
         logits = _create_model(x, is_training)
 

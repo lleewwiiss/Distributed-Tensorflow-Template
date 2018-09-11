@@ -1,6 +1,6 @@
 from base.trainer import BaseTrain
 import tensorflow as tf
-from models.example_model import Mnist
+from models.model import RawModel
 from data_loader.tfrecord_loader import TFRecordDataLoader
 
 
@@ -8,7 +8,7 @@ class ExampleTrainer(BaseTrain):
     def __init__(
         self,
         config: dict,
-        model: Mnist,
+        model: RawModel,
         train: TFRecordDataLoader,
         val: TFRecordDataLoader,
         pred: TFRecordDataLoader,
@@ -71,6 +71,7 @@ class ExampleTrainer(BaseTrain):
         :param estimator: your estimator function
         """
         # this should match the input shape of your model
+        # TODO: update this to your input used in prediction/serving
         x1 = tf.feature_column.numeric_column(
             "input", shape=[self.config["batch_size"], 28, 28, 1]
         )
