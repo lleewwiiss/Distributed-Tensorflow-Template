@@ -1,0 +1,22 @@
+trainingInput:
+  pythonVersion: "3.5"
+  scaleTier: CUSTOM
+  masterType: complex_model_m
+  workerType: complex_model_m
+  parameterServerType: large_model
+  workerCount: 9
+  parameterServerCount: 3
+  hyperparameters:
+    goal: MINIMIZE
+    hyperparameterMetricTag: loss
+    maxTrials: 5
+    maxParallelTrials: 1
+    enableTrialEarlyStopping: True
+    params:
+    - parameterName: learning-rate
+      type: DISCRETE
+      discreteValues:
+      - 0.1
+      - 0.01
+      - 0.001
+      - 0.0001
