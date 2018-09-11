@@ -1,3 +1,9 @@
+<h2 align="center">Distributed Tensorflow Project Template</h2>
+
+<p align="center">
+<a href="https://github.com/maxwellmri/Distributed-Tensorflow-Template/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+</p>
 A template for tensorflow models: Any question ask Lewis.
 Submit pull request if you have ideas. This is based on python3.5 and uses tensorflow-gpu 1.8
 

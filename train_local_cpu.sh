@@ -54,6 +54,7 @@ set +u
 source $1/bin/activate
 set -u
 
+export CUDA_VISIBLE_DEVICES=""
 # start training
 python3 -m initialisers.task \
         --job-dir ${JOB_DIR} \
