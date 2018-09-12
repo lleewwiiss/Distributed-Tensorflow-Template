@@ -72,7 +72,7 @@ class Mnist(BaseModel):
         # collect operations which need updating before back-prob e.g. Batch norm
         extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-        # create learning rate variable for hyperparameter tuning
+        # create learning rate variable for hyper-parameter tuning
         lr = tf.Variable(
             initial_value=self.config["learning_rate"], name="learning-rate"
         )
@@ -110,7 +110,7 @@ def _conv_block(
     x: tf.Tensor, layers: int, filters: int, is_training: bool
 ) -> tf.Tensor:
     """
-    Create a residual convolutional block using batch norm
+    Create a convolutional block using batch norm
     :param x: input layer which proceeds this block
     :param layers: number of conv blocks to create
     :param filters: number of filters in each conv layer

@@ -1,35 +1,56 @@
 #!/bin/bash
-if [ $# -ne 1 ]; then
-    echo $0: usage: train_local_dist envname
-    exit 1
-fi
+##########################################################
 
-# ensure you are linked to cuda on the machine
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
-export CUDA_HOME=/usr/local/cuda
+# where to write tfevents
+GCS_BUCKET="gs://model-exports"
 
-# needed to use virtualenvs
-set -euo pipefail
+# experiment settings
+BATCH=512
+LR=0.001
+EPOCHS=100
 
-
-# UPDATE ALL VARIABLES HERE
+# create a job name for the this run
 prefix="example"
 now=$(date +"%Y%m%d_%H_%M_%S")
-JOB_NAME=${1-"${prefix}_${now}"}
-# link to a bucket on gsp
-GCS_BUCKET="gs://example-bucket/"
-# Batch size
-TRAIN_BATCH=32
-EVAL_BATCH=32
-# learning rate
-LR="0.001"
-# number of epochs
-EPOCHS="100"
+JOB_NAME="$ENV_NAME"-"$prefix"_"$now"
+
 # locations locally or on the cloud for your files
 TRAIN_FILES="data/train.tfrecords"
 EVAL_FILES="data/val.tfrecords"
 TEST_FILES="data/test.tfrecords"
-# END OF VARIABLES
+
+##########################################################
+
+
+if [[ -z $0 && -z $1 ]]; then
+    echo "Incorrect arguments specified."
+    echo ""
+    echo "Usage: ./train_local_dist.sh [ENV_NAME]"
+    echo ""
+    exit 1
+else
+    if [[ -z $0 ]]; then
+        ENV_NAME="default"
+    else
+        ENV_NAME=$2
+    fi
+fi
+
+if [[ -z $LD_LIBRARY_PATH || -z $CUDA_HOME  ]]; then
+    echo ""
+    echo "CUDA environment variables not set."
+    echo "Consider adding them to your shell-rc."
+    echo ""
+    echo "Example:"
+    echo "----------------------------------------------------------"
+    echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64"'
+    echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64"'
+    echo 'CUDA_HOME="/usr/local/cuda"'
+    echo ""
+fi
+
+# needed to use virtualenvs
+set -euo pipefail
 
 # get current working directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -88,9 +109,11 @@ python3 -m initialisers.task \
 }
 
 # activate the virtual environment
-set +u
-source $1/bin/activate
-set -u
+if [[ -z $1 ]]; then
+    set +u
+    source $ENV_NAME/bin/activate
+    set -u
+fi
 
 # ensure parameter server doesn't use any of the GPUS
 export CUDA_VISIBLE_DEVICES=""

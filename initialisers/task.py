@@ -1,4 +1,4 @@
-from data_loader.tfrecord_loader import TFRecordDataLoader
+from data_loader.data_loader import TFRecordDataLoader
 from models.model import RawModel
 from trainers.train import RawTrainer
 from utils.utils import get_args, process_config
@@ -6,7 +6,8 @@ from utils.utils import get_args, process_config
 
 def init() -> None:
     """
-    The main function of the project used to initialise all the required functions for training the model
+    The main function of the project used to initialise all the required classes
+    used when training the model
     """
     # get input arguments
     args = get_args()

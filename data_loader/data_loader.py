@@ -15,6 +15,7 @@ class TFRecordDataLoader(DataLoader):
         """
         super().__init__(config, mode)
 
+        # Get a list of files in case you are using multiple tfrecords
         if self.mode == "train":
             self.file_names = [
                 os.path.join(os.getcwd(), x) for x in self.config["train_files"]
@@ -32,7 +33,8 @@ class TFRecordDataLoader(DataLoader):
 
     def input_fn(self) -> tf.data.Dataset:
         """
-        Create a tf.Dataset using tfrecords as inputs, use parallel loading and augmentation using the CPU to
+        Create a tf.Dataset using tfrecords as inputs, use parallel
+        loading and augmentation using the CPU to
         reduce bottle necking of operations on the GPU
         :return: a Dataset function
         """
@@ -74,6 +76,7 @@ class TFRecordDataLoader(DataLoader):
             }
             example = tf.parse_single_example(example, features=features)
 
+            # only augment training data
             if self.mode == "train":
                 input_data = self._augment(example["image"])
             else:

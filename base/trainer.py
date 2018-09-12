@@ -13,7 +13,8 @@ class BaseTrain:
         pred: data_loader.DataLoader,
     ) -> None:
         """
-        Simple framework to train, evaluate, test and export your model. The higher level TF API handle most of the work
+        Simple framework to train, evaluate, test and export your model. The
+        higher level TF API handles most of the work
         :param config: global configuration
         :param model: input function used to initialise model
         :param train: the training dataset
@@ -28,7 +29,8 @@ class BaseTrain:
 
     def run(self) -> None:
         """
-        Implement the required logic for training your model, the only changes will be configuration changes
+        Implement the required logic for training your model, the only changes
+        will be configuration changes
         """
         raise NotImplementedError
 
@@ -49,4 +51,4 @@ class BaseTrain:
         :param pred_fn: input_fn associated with prediction dataset
         :return: a list containing a prediction for each batch in the dataset
         """
-        return list(estimator.predict(input_fn=pred_fn, yield_single_examples=False))
+        raise NotImplementedError

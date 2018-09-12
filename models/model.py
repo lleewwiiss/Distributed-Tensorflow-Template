@@ -28,7 +28,7 @@ class RawModel(BaseModel):
 
         # TODO: create graph
         # initialise model architecture
-        logits = _create_model(x, is_training)
+        logits = self._create_model(x, is_training)
 
         # TODO: update model predictions
         predictions = {
@@ -86,11 +86,12 @@ class RawModel(BaseModel):
 
         return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
-
-def _create_model(x: tf.Tensor, is_training: bool) -> tf.Tensor:
-    """
-    :param x: input data
-    :param is_training: flag if currently training
-    :return: completely constructed model
-    """
-    raise NotImplementedError
+    @staticmethod
+    def _create_model(x: tf.Tensor, is_training: bool) -> tf.Tensor:
+        """
+        Implement the architecture of your model
+        :param x: input data
+        :param is_training: flag if currently training
+        :return: completely constructed model
+        """
+        pass

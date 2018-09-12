@@ -9,7 +9,8 @@ import pandas as pd
 # download the csvs from https://www.kaggle.com/c/digit-recognizer/data and place in data dir
 def main() -> None:
     """
-    Convert a set of numpy files to a set of train, eval and test tfrecord files. This example is for MNIST
+    Convert a set of numpy files to a set of train, eval and test
+    tfrecord files. This example is for MNIST
     """
     data_dir = "../data/temp/"
     # get all images
@@ -122,7 +123,8 @@ def main() -> None:
 
 def _extract_data() -> None:
     """
-    Convert the MNIST csv files to individual npy files and respective label files
+    Convert the MNIST csv files to individual npy files and respective label files,
+    as an example on how to convert numpy files to tfrecords
     """
     df = pd.read_csv("train.csv")
 

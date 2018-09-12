@@ -1,35 +1,57 @@
-#!/bin/bash
-if [ $# -ne 2 ]; then
-    echo $0: usage: train_local_single envname gpu_id
-    exit 1
-fi
+#!/usr/bin/env bash
+##########################################################
 
-# ensure you are linked to cuda on the machine
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
-export CUDA_HOME=/usr/local/cuda
+# where to write tfevents
+GCS_BUCKET="gs://model-exports"
 
-# needed to use virtualenvs
-set -euo pipefail
+# experiment settings
+BATCH=512
+LR=0.001
+EPOCHS=100
 
-# UPDATE ALL VARIABLES HERE
+# create a job name for the this run
 prefix="example"
 now=$(date +"%Y%m%d_%H_%M_%S")
-JOB_NAME=${1-"${prefix}_${now}"}
-# link to a bucket on gsp
-GCS_BUCKET="gs://example-bucket/"
-# Batch size
-TRAIN_BATCH=32
-EVAL_BATCH=32
-# learning rate
-LR="0.001"
-# number of epochs
-EPOCHS="100"
+JOB_NAME="$ENV_NAME"-"$prefix"_"$now"
+
 # locations locally or on the cloud for your files
 TRAIN_FILES="data/train.tfrecords"
 EVAL_FILES="data/val.tfrecords"
 TEST_FILES="data/test.tfrecords"
-# END OF VARIABLES
 
+##########################################################
+
+
+if [[ -z $1 && -z $2 ]]; then
+    echo "Incorrect arguments specified."
+    echo ""
+    echo "Usage: ./train_local_single.sh <GPU_ID> [ENV_NAME]"
+    echo ""
+    exit 1
+else
+    GPU_ID=$1
+    if [[ -z $2 ]]; then
+        ENV_NAME="default"
+    else
+        ENV_NAME=$2
+    fi
+fi
+
+if [[ -z $LD_LIBRARY_PATH || -z $CUDA_HOME  ]]; then
+    echo ""
+    echo "CUDA environment variables not set."
+    echo "Consider adding them to your shell-rc."
+    echo ""
+    echo "Example:"
+    echo "----------------------------------------------------------"
+    echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64"'
+    echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64"'
+    echo 'CUDA_HOME="/usr/local/cuda"'
+    echo ""
+fi
+
+# needed to use virtualenvs
+set -euo pipefail
 
 # get current working directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -43,33 +65,31 @@ JOB_DIR=$DIR/jobs/$JOB_NAME
 
 # Add notes to the log file based on the current information about this training job close vim to start training
 # useful if you are running lots of different experiments and you forget what values you used
-echo "---  
-## $JOB_NAME" >> training_log.md
+echo "---  ## $JOB_NAME" >> training_log.md
 echo "Learning Rate: $LR" >> training_log.md
 echo "Epochs: $EPOCHS" >> training_log.md
-echo "Batch Size (train/eval): $TRAIN_BATCH/ $EVAL_BATCH" >> training_log.md
-echo "### Hypothesis
-" >> training_log.md
-echo "### Results
-" >> training_log.md
+echo "Batch Size (train/eval): $BATCH / $BATCH" >> training_log.md
+echo "### Hypothesis" >> training_log.md
+echo "### Results" >> training_log.md
 vim + training_log.md
 
 # activate the virtual environment
-set +u
-source $1/bin/activate
-set -u
+if [[ -z $2 ]]; then
+    set +u
+    source $ENV_NAME/bin/activate
+    set -u
+fi
 
 # start training
-export CUDA_VISIBLE_DEVICES="$1" #SET TO GPU number
+CUDA_VISIBLE_DEVICES="$GPU_ID"
 python3 -m initialisers.task \
         --job-dir ${JOB_DIR} \
-        --train-batch-size ${TRAIN_BATCH} \
-        --eval-batch-size ${EVAL_BATCH} \
+        --train-batch-size ${BATCH} \
+        --eval-batch-size ${BATCH} \
         --learning-rate ${LR} \
         --num-epochs ${EPOCHS} \
         --train-files ${TRAIN_FILES} \
         --eval-files ${EVAL_FILES} \
         --test-files ${TEST_FILES} \
-        --export-path "${GCS_BUCKET}exports" \
-               &>runlogs/$2.log &
-               echo "$!" > runlogs/$2.pid
+        --export-path "${GCS_BUCKET}/exports" \
+&>runlogs/$GPU_ID.log & echo "$!" > runlogs/$GPU_ID.pid

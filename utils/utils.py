@@ -27,20 +27,12 @@ def get_args() -> dict:
     )
     parser.add_argument(
         "--num-epochs",
-        help="""\
-        Maximum number of training data epochs on which to train.
-        If both --max-steps and --num-epochs are specified,
-        the training job will run for --max-steps or --num-epochs,
-        whichever occurs first. If unspecified will run for --max-steps.\
-        """,
+        help="Maximum number of training data epochs on which to train.",
         type=int,
         required=True,
     )
     parser.add_argument(
-        "--train-batch-size",
-        help="""Batch size for training steps""",
-        type=int,
-        default=32,
+        "--train-batch-size", help="Batch size for training steps", type=int, default=32
     )
     parser.add_argument(
         "--eval-batch-size",
@@ -51,7 +43,7 @@ def get_args() -> dict:
     parser.add_argument(
         "--export-path",
         type=str,
-        help="""Where to export the saved model to locally or on GCP""",
+        help="Where to export the saved model to locally or on GCP",
     )
 
     parser.add_argument(
@@ -61,10 +53,7 @@ def get_args() -> dict:
         required=True,
     )
     parser.add_argument(
-        "--test-files",
-        help="GCS or local paths to evaluation data",
-        nargs="+",
-        required=True,
+        "--test-files", help="GCS or local paths to test data", nargs="+", required=True
     )
     # Training arguments
     parser.add_argument(

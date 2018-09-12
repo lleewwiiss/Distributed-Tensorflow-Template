@@ -29,7 +29,8 @@ class DataLoader(Sized):
     ) -> Tuple[Dict[str, tf.Tensor], tf.Tensor]:
         """
         A function for parsing single serialised Examples. To be used when
-        input files are TFRecords.
+        input files are TFRecords. If you are not using tf.Datasets this function
+        can be a generator
 
         :param example: the location of the data to parse the example from
         """
@@ -38,7 +39,7 @@ class DataLoader(Sized):
     def __len__(self) -> int:
         """
         Get number of records in the dataset
-        See example_train.py for example implementation
-        :return: number of samples in all tfrecord files
+        See example_train.py for example implementation using tfrecords
+        :return: number of samples in all files
         """
         raise NotImplementedError

@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
-# UPDATE ALL VARIABLES HERE
+##########################################################
+# where to write tfevents
+GCS_BUCKET="gs://model-exports"
+
+# experiment settings
+BATCH=512
+LR=0.001
+EPOCHS=100
+
+# create a job name for the this run
 prefix="example"
 now=$(date +"%Y%m%d_%H_%M_%S")
-JOB_NAME=${1-"${prefix}_${now}"}
-# link to a bucket on gsp
-GCS_BUCKET="gs://example-bucket/"
-# Batch size
-TRAIN_BATCH=32
-EVAL_BATCH=32
-# learning rate
-LR="0.001"
-# number of epochs
-EPOCHS="100"
+JOB_NAME="$ENV_NAME"-"$prefix"_"$now"
+
 # locations locally or on the cloud for your files
 TRAIN_FILES="${GCS_BUCKET}data/train.tfrecords"
 EVAL_FILES="${GCS_BUCKET}data/val.tfrecords"
-# END OF VARIABLES
+##########################################################
 
 gcloud ml-engine jobs submit training "${JOB_NAME}" \
     --job-dir "${GCS_BUCKET}BATCH-${BATCH}-LR-${LR}-${DATE}" \

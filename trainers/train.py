@@ -1,7 +1,8 @@
 from base.trainer import BaseTrain
 import tensorflow as tf
 from models.model import RawModel
-from data_loader.tfrecord_loader import TFRecordDataLoader
+from data_loader.data_loader import TFRecordDataLoader
+from typing import Callable
 
 
 class RawTrainer(BaseTrain):
@@ -83,3 +84,12 @@ class RawTrainer(BaseTrain):
         )
         # export the saved model
         estimator.export_savedmodel(save_location, export_input_fn)
+
+    def _predict(self, estimator: tf.estimator.Estimator, pred_fn: Callable) -> list:
+        """
+        Function to yield prediction results from the model
+        :param estimator: your estimator function
+        :param pred_fn: input_fn associated with prediction dataset
+        :return: a list containing a prediction for each batch in the dataset
+        """
+        pass

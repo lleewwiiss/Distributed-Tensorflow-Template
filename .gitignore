@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 *_env/
+training_log.md
+runlogs/
 .idea/
 # Distribution / packaging
 .Python
