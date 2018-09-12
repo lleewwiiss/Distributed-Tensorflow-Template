@@ -92,3 +92,5 @@ python3 -m initialisers.task \
         --test-files ${TEST_FILES} \
         --export-path "${OUTPUT_DIR}/exports" \
 &>runlogs/$GPU_ID.log & echo "$!" > runlogs/$GPU_ID.pid
+
+echo "Job launched."

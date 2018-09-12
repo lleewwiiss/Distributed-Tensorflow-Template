@@ -419,13 +419,13 @@ Folder structure
 This class is responsible for all data handling and processing and provide an easy interface that can be used by the trainer.
 The current loader uses tfrecords which are the recommended way of loading data into a Tensorflow model.  
 If you are using tfrecords you should:
-- Update the parse_example function so the input feature maps are the same as your model
+- Update the [parse_example](data_loader/data_loader.py) function so the input feature maps are the same as your model
 - Add or remove any augmentation methods
  
 ### Configuration
 
 --------------
-Add any static configuration variables to the dict in utils, otherwise it is recommended to use input variables
+Add any static configuration variables to the dict in [utils](utils/utils.py), otherwise it is recommended to use input variables
 to handle the configuration settings
 
 ### Task

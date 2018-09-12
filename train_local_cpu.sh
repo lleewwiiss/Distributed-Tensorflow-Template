@@ -79,3 +79,5 @@ python3 -m initialisers.task \
         --export-path "${OUTPUT_DIR}exports" \
                &>runlogs/$2.log &
                echo "$!" > runlogs/$2.pid
+
+echo "Job launched."

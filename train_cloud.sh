@@ -31,3 +31,5 @@ gcloud ml-engine jobs submit training "${JOB_NAME}" \
     --train-files ${TRAIN_FILES} \
     --eval-files ${EVAL_FILES} \
     --export-path "${GCS_BUCKET}exports"
+
+echo "Job launched."

@@ -136,3 +136,4 @@ do
     run "worker${gpu}"
 done
 
+echo "Job launched."
