@@ -259,7 +259,7 @@ TEST_FILES="data/test.tfrecords"
 Training on CPU
 --------------
 This script will train the model without using any GPUs and you can optionally
-specify a python environment to run the project from. [Script](train_local_cpu.sh)
+specify a python environment to run the project from. [Train CPU](train_local_cpu.sh)
 - ### Usage
 ```bash
 Usage: ./train_local_cpu.sh [ENV_NAME]
@@ -270,7 +270,7 @@ Training on GPU
 This script will train the model using on specific GPU and you can optionally
 specify a python environment to run the project from. It will also check to ensure
 you have setup the CUDA environment variables. To find out GPU usage the 
-***GPU_ID*** you can run in your terminal. [Script](train_local_cpu.sh)
+***GPU_ID*** you can run in your terminal. [Train GPU](train_local_single.sh)
 ```markdown
 nvidia-smi
 ```
@@ -284,7 +284,7 @@ Distributed local training
 --------------
 This script will allow you to simulate a distributed training environment locally on as many GPUs
 as your machine has. In order to do this you must split the GPUs into workers, masters and parameter servers.
-GPUs can be allocated to each of these types. Here is an example using 3 GPUs:
+GPUs can be allocated to each of these types. Here is an example using 3 GPUs. [Train distributed GPU](train_local_dist.sh)
 ```markdown
 config="
 {
@@ -331,17 +331,17 @@ Usage: ./train_local_dist.sh [ENV_NAME]
 Distributed cloud training
 --------------
 This script requires that you have Google Cloud SDK installed, and a Google Cloud Platform account
-with access to ml-engine. Training on the cloud does cost money, but it is very simple once setup.
+with access to ml-engine. Training on the cloud does cost money, but it is very simple once setup. [Train Cloud](train_cloud.sh)
 
 - ### Job config
-    The ***hptuning_config.yaml*** file will be used to specify the resources you are requesting for this job.
+    The [hptuning_config.yaml](hptuning_config.yaml) file will be used to specify the resources you are requesting for this job.
     You are able to scale this for your needs, it will behave the same as the local distributed training.  
     More information here: https://cloud.google.com/ml-engine/docs/tensorflow/using-gpus  
     See pricing here: https://cloud.google.com/ml-engine/docs/pricing
 
 It is required that the data be stored on GCP somewhere in a bucket, and you also need to specify where to
 export your model and checkpoints to. Ensure that any additional packages your model needs are defined
-in ***setup.py*** and make sure you aren't specifying packages that are already part of ml-engine (https://cloud.google.com/ml-engine/docs/tensorflow/runtime-version-list)
+in [setup.py](setup.py) and make sure you aren't specifying packages that are already part of ml-engine (https://cloud.google.com/ml-engine/docs/tensorflow/runtime-version-list)
 - ### Usage
 ```bash
 Usage: ./train_cloud.sh
@@ -440,17 +440,17 @@ This can now be used as the entry point to run your experiment.
 
 ### Project Settings
 - ### Flake8
-    This project includes settings for the python linter Flake8 which are compatible with black and mypy. Update ***.flake8*** 
+    This project includes settings for the python linter Flake8 which are compatible with black and mypy. Update [.flake8](.flake8) 
     if you would like to change these settings
 - ### Black
     This project includes settings for the python formatter Black. The settings for black should be defined
-    in the ***pyproject.toml*** file
+    in the [pyproject.toml](pyproject.toml) file
 - ### MyPy
     This project includes settings for the python option static type check Mypy. The settings are
-    defined in ***mypy.ini*** you can define files to ignore in here.
+    defined in [mypy.ini](mypy.ini) you can define files to ignore in here.
 - ### Pre-commit
     This project includes settings for pre-commit hooks to run flake8, black and mypy. The settings are
-    defined in ***.pre-commit-config.yaml***. To maintain good code quality it is recommended to install
+    defined in [.pre-commit-config.yaml](.pre-commit-config.yaml). To maintain good code quality it is recommended to install
     and use pre-commit, which runs these tools each time you commit, ensuring they pass before you can push.
     If you are wanting to use this, make sure the other tools are installed using pip then run:
 ```bash
@@ -458,7 +458,7 @@ pip install pre-commit
 pre-commit install
 ```
 - ### Setup
-    Update the ***setup.py*** and ***requirements.txt*** for your project, specifying any packages that you
+    Update the [setup.py](setup.py) and [requirements.txt](requirements.txt) for your project, specifying any packages that you
     need for your project.
 
 # Contributing
