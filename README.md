@@ -214,7 +214,7 @@ def process_config() -> dict:
 
     return config
 ```
-**There is a MNIST CNN example within the template, which shows how to create and use the mode. Delete these files if you don'e need them**
+**There is a MNIST CNN example within the template, which shows how to create and use the mode. Delete these files if you don't need them**
 
 # Training
 In order to train your model there is a series of bash scripts which can train your model for serveral different
