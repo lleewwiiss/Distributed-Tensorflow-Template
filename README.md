@@ -219,7 +219,7 @@ def process_config() -> dict:
 # Training
 In order to train your model there is a series of bash scripts which can train your model for serveral different
 training environments. All of the local scripts will create log files. There will be a ***training_log.md*** file
-which you can use as a scratch book to track your experiment details and also the stdout of your model will be written
+which you can use as a scratch file to track your experiment details and also the stdout of your model will be written
 to ***runlogs/*** where each respective process will have a log. It also creates a ***.pid*** files which can be used to 
 to kill the process if need be. An example of the training log is shown below:
 ```
@@ -259,7 +259,7 @@ TEST_FILES="data/test.tfrecords"
 Training on CPU
 --------------
 This script will train the model without using any GPUs and you can optionally
-specify a python environment to run the project from. 
+specify a python environment to run the project from. [Script](train_local_cpu.sh)
 - ### Usage
 ```bash
 Usage: ./train_local_cpu.sh [ENV_NAME]
@@ -270,7 +270,7 @@ Training on GPU
 This script will train the model using on specific GPU and you can optionally
 specify a python environment to run the project from. It will also check to ensure
 you have setup the CUDA environment variables. To find out GPU usage the 
-***GPU_ID*** you can run in your terminal:
+***GPU_ID*** you can run in your terminal. [Script](train_local_cpu.sh)
 ```markdown
 nvidia-smi
 ```
