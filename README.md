@@ -26,7 +26,7 @@ A template for creating pragmatic Tensorflow models using the Dataset and Estima
  -  [Contributing](#contributing)
 
 # In a Nutshell   
-**There is a MNIST CNN example within the template, which shows how to create and use the mode. Delete these files if you don'e need them**
+**There is a [MNIST CNN](models/example_model.py) example within the template, prefixed with ***example_***, which shows how to create and use the template. Delete these files if you don't need them**
 
 Look for ***#TODO*** tags in these classes as hints of what you need to update to create your model.  
 
