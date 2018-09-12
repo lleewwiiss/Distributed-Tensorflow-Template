@@ -26,8 +26,12 @@ A template for creating pragmatic Tensorflow models using the Dataset and Estima
  -  [Contributing](#contributing)
 
 # In a Nutshell   
+**There is a MNIST CNN example within the template, which shows how to create and use the mode. Delete these files if you don'e need them**
+
+Look for ***#TODO*** tags in these classes as hints of what you need to update to create your model.  
+
 In a nutshell here's how to use this template,**for example** to implement a VGG model you should do the following:
--  In the [models](models) folder update the template class to VGG and inherit from "BaseModel".
+-  Update the [model](models/model.py) script by creating a class  called VGG and inherit from "BaseModel".
 
 ```python
 class VGG16(BaseModel):
@@ -38,7 +42,7 @@ class VGG16(BaseModel):
         super().__init__(config)
 
   ```
-- Update the create model function to build the graph for your model architecture.    
+- Update the create model function in this script to build the graph for your model architecture.    
 ```python
 def _create_model(x: tf.Tensor, is_training: bool) -> tf.Tensor:
     """
@@ -58,7 +62,6 @@ predictions = {
     "probabilities": tf.nn.softmax(logits),
 }
 
-# if mode is prediction
 if mode == tf.estimator.ModeKeys.PREDICT:
     # TODO: update output during serving
     export_outputs = {
@@ -91,13 +94,13 @@ if mode == tf.estimator.ModeKeys.EVAL:
   ```
  
   - Change your optimizer to suit your architecture, ensure if you are using Batch Normalisation that you are 
-  using control dependencies (see mnist example).   
+  using control dependencies (see [MNIST](models/example_model.py) example).   
 ```python
 # TODO: update optimiser
 optimizer = tf.train.AdamOptimizer(lr)
   ```
  
-- In the [trainers](trainers) folder, update the trainer script and make sure to inherit from the "BaseTrain" class.
+- Update then [train](trainers/train.py) script, and make sure to inherit from the "BaseTrain" class and use your new model and data loaders
 ```python
 class VGGTrainer(BaseTrain):
     def __init__(
@@ -146,7 +149,9 @@ def _export_model(
         estimator.export_savedmodel(save_location, export_input_fn)
 ```
 
-- In data loader update the data loader to correctly load your input data, add or remove augmentation as needed.
+- Update [data loader](data_loader/data_loader.py) to correctly load your input data, add or remove augmentation as needed. This example
+is for tfrecords, it is possible to use other input data types (https://www.tensorflow.org/guide/datasets). Doing data loading and 
+pre-processing on CPU helps reduce GPU bottlenecks.
 ```python
 def _parse_example(
         self, example: tf.Tensor
@@ -174,7 +179,7 @@ def _parse_example(
         return {"input": input_data}, example["label"]
 
 ```
-- In your initialiser ensure your new model and trainer are used. These scripts are used to initialise and train your model.
+- Update the [task](initialisers/task.py) script ensuring your new model and trainer are used. These scripts are used to initialise and train your model.
 ```python
 def init() -> None:
     """
@@ -202,8 +207,8 @@ def init() -> None:
     # start training
     trainer.run()
 ```
-- Within [utils](utils/utils.py) add any input arguments you need for your model, these will be added to the global config. 
-For variables that are unlikely to change you can add them to the config dictionary.
+- Update the [utils](utils/utils.py) script adding any input arguments you need for your model, these will be added to the global config. 
+For variables that are unlikely to change you can add them to the static config dictionary.
 ```python
 def process_config() -> dict:
     """
@@ -214,14 +219,16 @@ def process_config() -> dict:
 
     return config
 ```
-**There is a MNIST CNN example within the template, which shows how to create and use the mode. Delete these files if you don'e need them**
 
 # Training
-In order to train your model there is a series of bash scripts which can train your model for serveral different
-training environments. All of the local scripts will create log files. There will be a ***training_log.md*** file
-which you can use as a scratch file to track your experiment details and also the stdout of your model will be written
-to ***runlogs/*** where each respective process will have a log. It also creates a ***.pid*** files which can be used to 
-to kill the process if need be. An example of the training log is shown below:
+In order to train your model there is a series of bash scripts which can train your model for several different
+training environments. All of the local scripts will create log files.  
+
+***training_log.md*** is created, or appended to, each time you run one of the scripts. You can use it as a scratch file to 
+track your experiment details.  
+
+The stdout of your model will be written files in ***runlogs/*** where each respective process will have a log. It also creates a ***.pid*** files which can be used to 
+to kill the process if need be. An example of ***training_log.md*** is shown below:
 ```
 Example Training Job 
 Learning Rate: 0.001
@@ -235,7 +242,7 @@ Model diverged even quicker
 If you are not comfortable with vim or do not want to use this, you can remove it from scripts.
 
 For each of the scripts you are going to need to update the hyper-parameters you
-are wanting to use for this training run. Cloud based file paths won't work on windows
+are wanting to use for this training run. Cloud based file paths won't work on windows. Add any additional input arguments that you have added to your model.
 ```bash
 ##########################################################
 # where to write tfevents
@@ -258,8 +265,9 @@ TEST_FILES="data/test.tfrecords"
 
 Training on CPU
 --------------
+[Train CPU](train_local_cpu.sh)  
 This script will train the model without using any GPUs and you can optionally
-specify a python environment to run the project from. [Train CPU](train_local_cpu.sh)
+specify a python environment to run the project from. 
 - ### Usage
 ```bash
 Usage: ./train_local_cpu.sh [ENV_NAME]
@@ -267,10 +275,11 @@ Usage: ./train_local_cpu.sh [ENV_NAME]
 
 Training on GPU
 --------------
+[Train GPU](train_local_single.sh)  
 This script will train the model using on specific GPU and you can optionally
 specify a python environment to run the project from. It will also check to ensure
-you have setup the CUDA environment variables. To find out GPU usage the 
-***GPU_ID*** you can run in your terminal. [Train GPU](train_local_single.sh)
+you have setup the CUDA environment variables. To find out GPU usage or which 
+***GPU_ID*** to use you can run this in your terminal. 
 ```markdown
 nvidia-smi
 ```
@@ -282,9 +291,10 @@ Usage: ./train_local_single.sh <GPU_ID> [ENV_NAME]
 
 Distributed local training
 --------------
+[Train distributed GPU](train_local_dist.sh)  
 This script will allow you to simulate a distributed training environment locally on as many GPUs
 as your machine has. In order to do this you must split the GPUs into workers, masters and parameter servers.
-GPUs can be allocated to each of these types. Here is an example using 3 GPUs. [Train distributed GPU](train_local_dist.sh)
+GPUs can be allocated to each of these types. You can also set this up directly in python (https://www.tensorflow.org/deploy/distributed). The script contains an example using 3 GPUs:
 ```markdown
 config="
 {
@@ -320,9 +330,9 @@ do
     run "worker${gpu}"
 done
 ```
-This setup has 1 master, one parameter server, and two workers. The master is allocated one GPU and
-the workers also have 1 GPU each. The parameter sever will be run on cpu. We defining new configurations
-you have to ensure that the ports used in the ***config*** are not being used.
+This setup has 1 master, 1 parameter server, and two workers. The master is allocated one GPU and
+the workers also have 1 GPU each. The parameter sever will be run on CPU. When defining new configurations
+you have to ensure that the ports used in the ***config*** are not in use.
 - ### Usage
 ```bash
 Usage: ./train_local_dist.sh [ENV_NAME]
@@ -330,8 +340,9 @@ Usage: ./train_local_dist.sh [ENV_NAME]
 
 Distributed cloud training
 --------------
-This script requires that you have Google Cloud SDK installed, and a Google Cloud Platform account
-with access to ml-engine. Training on the cloud does cost money, but it is very simple once setup. [Train Cloud](train_cloud.sh)
+[Train Cloud](train_cloud.sh)  
+This script requires that you have Google Cloud SDK installed (https://cloud.google.com/sdk/install), and a Google Cloud Platform account
+with access to ml-engine. Trial GCP accounts come with credit if you want to try this out. Training on the cloud does cost money, but it is very simple once setup. 
 
 - ### Job config
     The [hptuning_config.yaml](hptuning_config.yaml) file will be used to specify the resources you are requesting for this job.
@@ -339,7 +350,7 @@ with access to ml-engine. Training on the cloud does cost money, but it is very 
     More information here: https://cloud.google.com/ml-engine/docs/tensorflow/using-gpus  
     See pricing here: https://cloud.google.com/ml-engine/docs/pricing
 
-It is required that the data be stored on GCP somewhere in a bucket, and you also need to specify where to
+It is required that the data is stored on GCP somewhere in a bucket, and you also need to specify what bucket to
 export your model and checkpoints to. Ensure that any additional packages your model needs are defined
 in [setup.py](setup.py) and make sure you aren't specifying packages that are already part of ml-engine (https://cloud.google.com/ml-engine/docs/tensorflow/runtime-version-list)
 - ### Usage
@@ -394,13 +405,13 @@ Folder structure
     So you should:
     - Create your model class and inherit the base_model class
     - Override "model" where you write the tensorflow Estimator experiment
-    - Override "create model" where you write your model architecture
+    - Override "create_model" where you write your model architecture
 
 ### Trainer
 
 --------------
 - #### **Base trainer**
-    Base trainer is an abstract class that just wrap the training process.
+    Base trainer is an abstract class that just wraps the training process.
     - ***Run*** This function sets up the Estimator configuration for the different training stages and runs your 
     training loop
     - ***Export Model*** This function exports the model to a given location with compatibility for Tensorflow Serving
@@ -416,7 +427,7 @@ Folder structure
 ### Data Loader
 
 --------------
-This class is responsible for all data handling and processing and provide an easy interface that can be used by the trainer.
+This class is responsible for all data handling and processing and provides an easy interface that can be used by the trainer.
 The current loader uses tfrecords which are the recommended way of loading data into a Tensorflow model.  
 If you are using tfrecords you should:
 - Update the [parse_example](data_loader/data_loader.py) function so the input feature maps are the same as your model
@@ -446,19 +457,19 @@ This can now be used as the entry point to run your experiment.
     This project includes settings for the python formatter Black. The settings for black should be defined
     in the [pyproject.toml](pyproject.toml) file
 - ### MyPy
-    This project includes settings for the python option static type check Mypy. The settings are
+    This project includes settings for the python optional static type check Mypy. The settings are
     defined in [mypy.ini](mypy.ini) you can define files to ignore in here.
 - ### Pre-commit
     This project includes settings for pre-commit hooks to run flake8, black and mypy. The settings are
-    defined in [.pre-commit-config.yaml](.pre-commit-config.yaml). To maintain good code quality it is recommended to install
+    defined in [.pre-commit-config.yaml](.pre-commit-config.yaml). To maintain good code quality it is recommended you install
     and use pre-commit, which runs these tools each time you commit, ensuring they pass before you can push.
-    If you are wanting to use this, make sure the other tools are installed using pip then run:
+    If you are wanting to use this, make sure the other tools are installed using pip then run within your model folder:
 ```bash
 pip install pre-commit
 pre-commit install
 ```
 - ### Setup
-    Update the [setup.py](setup.py) and [requirements.txt](requirements.txt) for your project, specifying any packages that you
+    Update the [setup.py](setup.py) details and [requirements.txt](requirements.txt) for your project, specifying any packages that you
     need for your project.
 
 # Contributing

@@ -35,7 +35,6 @@ class Mnist(BaseModel):
             "probabilities": tf.nn.softmax(logits),
         }
 
-        # if mode is prediction
         if mode == tf.estimator.ModeKeys.PREDICT:
             # define what to output during serving
             export_outputs = {
@@ -54,7 +53,6 @@ class Mnist(BaseModel):
         tf.summary.scalar("loss", loss)
         tf.summary.image("input", tf.reshape(image, [-1, 28, 28, 1]))
 
-        # if mode is evaluation
         if mode == tf.estimator.ModeKeys.EVAL:
             # create a evaluation metric
             summaries_dict = {
@@ -66,7 +64,7 @@ class Mnist(BaseModel):
                 mode=mode, loss=loss, eval_metric_ops=summaries_dict
             )
 
-        # assert only reach this point during training
+        # assert only reach this point during training mode
         assert mode == tf.estimator.ModeKeys.TRAIN
 
         # collect operations which need updating before back-prob e.g. Batch norm

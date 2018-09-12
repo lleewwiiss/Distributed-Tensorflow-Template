@@ -36,7 +36,6 @@ class RawModel(BaseModel):
             "probabilities": tf.nn.softmax(logits),
         }
 
-        # if mode is prediction
         if mode == tf.estimator.ModeKeys.PREDICT:
             # TODO: update output during serving
             export_outputs = {
@@ -55,7 +54,6 @@ class RawModel(BaseModel):
         tf.summary.scalar("loss", loss)
         tf.summary.image("input", tf.reshape(x, [-1, 28, 28, 1]))
 
-        # if mode is evaluation
         if mode == tf.estimator.ModeKeys.EVAL:
             # TODO: update evaluation metrics
             summaries_dict = {
