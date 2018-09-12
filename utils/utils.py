@@ -75,7 +75,7 @@ def get_args() -> dict:
     )
 
     parser.add_argument(
-        "--keep-prob", help="keep probability for dropout", default=0.5, type=int
+        "--keep-prob", help="Keep probability for dropout", default=0.5, type=int
     )
 
     args, unknown = parser.parse_known_args()

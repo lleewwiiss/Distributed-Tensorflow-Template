@@ -26,8 +26,8 @@ A template for creating pragmatic Tensorflow models using the Dataset and Estima
  -  [Contributing](#contributing)
 
 # In a Nutshell   
-In a nutshell here's how to use this template, so **for example** assume you want to implement VGG model so you should do the following:
--  In models folder update the template class to VGG that inherit the "base_model" class
+In a nutshell here's how to use this template,**for example** to implement a VGG model you should do the following:
+-  In the [models](models) folder update the template class to VGG and inherit from "BaseModel".
 
 ```python
 class VGG16(BaseModel):
@@ -38,7 +38,7 @@ class VGG16(BaseModel):
         super().__init__(config)
 
   ```
-- Update the create model function to implement your model architecture    
+- Update the create model function to build the graph for your model architecture.    
 ```python
 def _create_model(x: tf.Tensor, is_training: bool) -> tf.Tensor:
     """
@@ -50,7 +50,7 @@ def _create_model(x: tf.Tensor, is_training: bool) -> tf.Tensor:
 
   ```
 
-- Update the prediction and serving outputs for your model    
+- Update the prediction and serving outputs for your model.   
 ```python
 # TODO: update model predictions
 predictions = {
@@ -71,7 +71,7 @@ if mode == tf.estimator.ModeKeys.PREDICT:
     )
   ```
   
- - Add any summaries you want to have on tensorboard for training and eval
+ - Add any summaries you want to have on tensorboard for training and evaluation.
 ```python
 # TODO: update summaries for tensorboard
 tf.summary.scalar("loss", loss)
@@ -90,14 +90,14 @@ if mode == tf.estimator.ModeKeys.EVAL:
     )
   ```
  
-  - Change your optimizer to suite your architecture, ensure if you are using Batch Normalisation that you are 
-  using control dependencies (see mnist example)   
+  - Change your optimizer to suit your architecture, ensure if you are using Batch Normalisation that you are 
+  using control dependencies (see mnist example).   
 ```python
 # TODO: update optimiser
 optimizer = tf.train.AdamOptimizer(lr)
   ```
  
-- In trainers folder the trainer script that inherit from "base_train" class
+- In the [trainers](trainers) folder, update the trainer script and make sure to inherit from the "BaseTrain" class.
 ```python
 class VGGTrainer(BaseTrain):
     def __init__(
@@ -121,7 +121,7 @@ class VGGTrainer(BaseTrain):
         super().__init__(config, model, train, val, pred)
 ```
 
-- In the same script update the export function to match the inputs for your model
+- In the same script update the export function to match the inputs for your model.
 ```python
 def _export_model(
         self, estimator: tf.estimator.Estimator, save_location: str
@@ -146,7 +146,7 @@ def _export_model(
         estimator.export_savedmodel(save_location, export_input_fn)
 ```
 
-- In data loader update the data loader to correctly load your input data, add or remove augmentation as needed
+- In data loader update the data loader to correctly load your input data, add or remove augmentation as needed.
 ```python
 def _parse_example(
         self, example: tf.Tensor
@@ -174,7 +174,7 @@ def _parse_example(
         return {"input": input_data}, example["label"]
 
 ```
-- In your initialiser ensure your new model and trainer are used. This scripts is used to initialise and train your model
+- In your initialiser ensure your new model and trainer are used. These scripts are used to initialise and train your model.
 ```python
 def init() -> None:
     """
@@ -202,8 +202,8 @@ def init() -> None:
     # start training
     trainer.run()
 ```
-- Within utils add any input arguments you need for your model, these will be added to the global config, for variables 
-that are unlikely to change you can add them to the config dictionary
+- Within [utils](utils/utils.py) add any input arguments you need for your model, these will be added to the global config. 
+For variables that are unlikely to change you can add them to the config dictionary.
 ```python
 def process_config() -> dict:
     """
@@ -296,6 +296,8 @@ Folder structure
      - Override the predict function for your projects requirements
 
 ### Data Loader
+
+--------------
 This class is responsible for all data handling and processing and provide an easy interface that can be used by the trainer.
 The current loader uses tfrecords which are the recommended way of loading data into a Tensorflow model.  
 If you are using tfrecords you should:
@@ -303,10 +305,14 @@ If you are using tfrecords you should:
 - Add or remove any augmentation methods
  
 ### Configuration
+
+--------------
 Add any static configuration variables to the dict in utils, otherwise it is recommended to use input variables
 to handle the configuration settings
 
 ### Task
+
+--------------
 Here's where you combine all previous part.
 1. Update the model to use your new model class
 2. Update the datasets to point to your data loader function for each respective training step (train, eval, prediction etc) 
@@ -327,10 +333,17 @@ This can now be used as the entry point to run your experiment.
 - ### Pre-commit
     This project includes settings for pre-commit hooks to run flake8, black and mypy. The settings are
     defined in ***.pre-commit-config.yaml***. To maintain good code quality it is recommended to install
-    and use pre-commit, which runs these tools each time you commit, ensuring they pass before you can push
+    and use pre-commit, which runs these tools each time you commit, ensuring they pass before you can push.
+    If you are wanting to use this, make sure the other tools are installed using pip then run:
+```bash
+pip install pre-commit
+pre-commit install
+```
 - ### Setup
     Update the ***setup.py*** and ***requirements.txt*** for your project, specifying any packages that you
     need for your project.
 
 # Contributing
+
+--------------
 Any kind of enhancement or contribution is welcomed.
