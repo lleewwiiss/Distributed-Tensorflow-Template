@@ -217,17 +217,135 @@ def process_config() -> dict:
 **There is a MNIST CNN example within the template, which shows how to create and use the mode. Delete these files if you don'e need them**
 
 # Training
+In order to train your model there is a series of bash scripts which can train your model for serveral different
+training environments. All of the local scripts will create log files. There will be a ***training_log.md*** file
+which you can use as a scratch book to track your experiment details and also the stdout of your model will be written
+to ***runlogs/*** where each respective process will have a log. It also creates a ***.pid*** files which can be used to 
+to kill the process if need be. An example of the training log is shown below:
+```
+Example Training Job 
+Learning Rate: 0.001
+Epochs: 100
+Batch Size (train/eval): 512/ 512
+Hypothesis:
+Model will converge quickly
+Results:
+Model diverged even quicker
+```
+If you are not comfortable with vim or do not want to use this, you can remove it from scripts.
+
+For each of the scripts you are going to need to update the hyper-parameters you
+are wanting to use for this training run. Cloud based file paths won't work on windows
+```bash
+##########################################################
+# where to write tfevents
+OUTPUT_DIR="gs://model-exports"
+# experiment settings
+TRAIN_BATCH=512
+EVAL_BATCH=512
+LR=0.001
+EPOCHS=100
+# create a job name for the this run
+prefix="example"
+now=$(date +"%Y%m%d_%H_%M_%S")
+JOB_NAME="$ENV_NAME"-"$prefix"_"$now"
+# locations locally or on the cloud for your files
+TRAIN_FILES="data/train.tfrecords"
+EVAL_FILES="data/val.tfrecords"
+TEST_FILES="data/test.tfrecords"
+##########################################################
+```
+
 Training on CPU
 --------------
+This script will train the model without using any GPUs and you can optionally
+specify a python environment to run the project from. 
+- ### Usage
+```bash
+Usage: ./train_local_cpu.sh [ENV_NAME]
+```
 
 Training on GPU
 --------------
+This script will train the model using on specific GPU and you can optionally
+specify a python environment to run the project from. It will also check to ensure
+you have setup the CUDA environment variables. To find out GPU usage the 
+***GPU_ID*** you can run in your terminal:
+```markdown
+nvidia-smi
+```
+- ### Usage
+```bash
+Usage: ./train_local_single.sh <GPU_ID> [ENV_NAME]
+```
+
 
 Distributed local training
 --------------
+This script will allow you to simulate a distributed training environment locally on as many GPUs
+as your machine has. In order to do this you must split the GPUs into workers, masters and parameter servers.
+GPUs can be allocated to each of these types. Here is an example using 3 GPUs:
+```markdown
+config="
+{
+    \"master\": [\"localhost:27182\"],
+    \"ps\": [\"localhost:27183\"],
+    \"worker\": [
+        \"localhost:27184\",
+        \"localhost:27185\"
+        ]
+}, \"environment\": \"cloud\""
+...
+# ensure parameter server doesn't use any of the GPUs in this case
+export CUDA_VISIBLE_DEVICES=""
+# Parameter Server can be run on cpu
+task="{\"type\": \"ps\", \"index\": 0}"
+export TF_CONFIG="{\"cluster\":${config}, \"task\":${task}}"
+run ps
+
+# Master should be run on GPU as it runs the evaluation
+export CUDA_VISIBLE_DEVICES="1"
+task="{\"type\": \"master\", \"index\": 0}"
+export TF_CONFIG="{\"cluster\":${config}, \"task\":${task}}"
+run master
+
+
+# Workers (Number of GPUS-1 one used by the master server)
+for gpu in 0 1
+do
+    task="{\"type\": \"worker\", \"index\": $gpu}"
+    export TF_CONFIG="{\"cluster\":${config}, \"task\":${task}}"
+    export CUDA_VISIBLE_DEVICES="$gpu"
+
+    run "worker${gpu}"
+done
+```
+This setup has 1 master, one parameter server, and two workers. The master is allocated one GPU and
+the workers also have 1 GPU each. The parameter sever will be run on cpu. We defining new configurations
+you have to ensure that the ports used in the ***config*** are not being used.
+- ### Usage
+```bash
+Usage: ./train_local_dist.sh [ENV_NAME]
+```
 
 Distributed cloud training
 --------------
+This script requires that you have Google Cloud SDK installed, and a Google Cloud Platform account
+with access to ml-engine. Training on the cloud does cost money, but it is very simple once setup.
+
+- ### Job config
+    The ***hptuning_config.yaml*** file will be used to specify the resources you are requesting for this job.
+    You are able to scale this for your needs, it will behave the same as the local distributed training.  
+    More information here: https://cloud.google.com/ml-engine/docs/tensorflow/using-gpus  
+    See pricing here: https://cloud.google.com/ml-engine/docs/pricing
+
+It is required that the data be stored on GCP somewhere in a bucket, and you also need to specify where to
+export your model and checkpoints to. Ensure that any additional packages your model needs are defined
+in ***setup.py*** and make sure you aren't specifying packages that are already part of ml-engine (https://cloud.google.com/ml-engine/docs/tensorflow/runtime-version-list)
+- ### Usage
+```bash
+Usage: ./train_cloud.sh
+```
 
 # In Details
 Folder structure
@@ -235,27 +353,27 @@ Folder structure
 
 ```
 ├──  base
-│    ├── data_loader.py  - this function contains the abstract class of the tfrecord data loader.
-│    ├── model.py        - this function contains the abstract class of the model.
-│    └── trainer.py      - this function contains the abstract class of the model trainer.
+│    ├── data_loader.py  - this script contains the abstract class of the tfrecord data loader.
+│    ├── model.py        - this script contains the abstract class of the model.
+│    └── trainer.py      - this script contains the abstract class of the model trainer.
 │
 ├──  data                - this folder contains any data your project may need.
 │
 ├──  data_loader  
-│    └── data_loader.py  - this function is responsible for all data handling.
+│    └── data_loader.py  - this script is responsible for all data handling.
 │
 ├── initialisers        
-│   └── task.py          - this function is used to start training model
+│   └── task.py          - this script is used to start training model
 │   
 ├──  models              
-│    └── model.py        - this function is where your model is defined for each training phase.
+│    └── model.py        - this script is where your model is defined for each training phase.
 │  
 ├──  trainers
-│    └── train.py        - this function is where your estimator configuration is defined.
+│    └── train.py        - this script is where your estimator configuration is defined.
 │ 
 └── utils
-     ├── create_tfrecords.py
-     └── utils.py        - this function handles your input variables and defines a global config.
+     ├── make_tfrec.py   - this script is an example how to create tfrecords from numpy or cvs files
+     └── utils.py        - this script handles your input variables and defines a global config.
 
 ```
 

@@ -2,24 +2,21 @@
 ##########################################################
 # where to write tfevents
 GCS_BUCKET="gs://model-exports"
-
 # experiment settings
 BATCH=512
 LR=0.001
 EPOCHS=100
-
 # create a job name for the this run
 prefix="example"
 now=$(date +"%Y%m%d_%H_%M_%S")
-JOB_NAME="$ENV_NAME"-"$prefix"_"$now"
-
+JOB_NAME="$prefix"_"$now"
 # locations locally or on the cloud for your files
 TRAIN_FILES="${GCS_BUCKET}data/train.tfrecords"
 EVAL_FILES="${GCS_BUCKET}data/val.tfrecords"
 ##########################################################
 
 gcloud ml-engine jobs submit training "${JOB_NAME}" \
-    --job-dir "${GCS_BUCKET}BATCH-${BATCH}-LR-${LR}-${DATE}" \
+    --job-dir "${GCS_BUCKET}BATCH-${BATCH}-LR-${LR}-${now}" \
     --package-path initialisers \
     --module-name "initialisers.task" \
     --region us-central1 \

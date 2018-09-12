@@ -2,7 +2,6 @@ from base.data_loader import DataLoader
 import tensorflow as tf
 import multiprocessing
 from typing import Tuple, Dict
-import os
 import random
 
 
@@ -17,19 +16,13 @@ class TFRecordDataLoader(DataLoader):
 
         # Get a list of files in case you are using multiple tfrecords
         if self.mode == "train":
-            self.file_names = [
-                os.path.join(os.getcwd(), x) for x in self.config["train_files"]
-            ]
+            self.file_names = self.config["train_files"]
             self.batch_size = self.config["train_batch_size"]
         elif self.mode == "val":
-            self.file_names = [
-                os.path.join(os.getcwd(), x) for x in self.config["eval_files"]
-            ]
+            self.file_names = self.config["eval_files"]
             self.batch_size = self.config["eval_batch_size"]
         else:
-            self.file_names = [
-                os.path.join(os.getcwd(), x) for x in self.config["test_files"]
-            ]
+            self.file_names = self.config["test_files"]
 
     def input_fn(self) -> tf.data.Dataset:
         """
