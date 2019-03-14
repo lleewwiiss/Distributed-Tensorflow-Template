@@ -1,15 +1,16 @@
 from base.trainer import BaseTrain
-import tensorflow as tf
-from models.model import RawModel
+import tensorflow.keras as K
+from models.model import MNIST
 from data_loader.data_loader import TFRecordDataLoader
-from typing import Callable
+import tensorflow as tf
+import os
 
 
 class RawTrainer(BaseTrain):
     def __init__(
         self,
         config: dict,
-        model: RawModel,
+        model: MNIST,
         train: TFRecordDataLoader,
         val: TFRecordDataLoader,
         pred: TFRecordDataLoader,
@@ -25,71 +26,93 @@ class RawTrainer(BaseTrain):
         :param pred: the prediction dataset
         """
         super().__init__(config, model, train, val, pred)
+        self.compute_loss = tf.keras.losses.SparseCategoricalCrossentropy(
+            from_logits=True)
+        self.optimizer = K.optimizers.Adam()
+        self.compute_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
 
     def run(self) -> None:
-        # allow memory usage to me scaled based on usage
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
 
-        # get number of steps required for one pass of data
-        steps_pre_epoch = len(self.train) / self.config["train_batch_size"]
-        # save_checkpoints_steps is number of batches before eval
-        run_config = tf.estimator.RunConfig(
-            session_config=config,
-            save_checkpoints_steps=steps_pre_epoch
-            * 10,  # number of batches before eval/checkpoint
-            log_step_count_steps=steps_pre_epoch,  # number of steps in epoch
-        )
-        # set output directory
-        run_config = run_config.replace(model_dir=self.config["job_dir"])
-
-        # intialise the estimator with your model
-        estimator = tf.estimator.Estimator(model_fn=self.model.model, config=run_config)
-
-        # create train and eval specs for estimator, it will automatically convert the tf.Dataset into an input_fn
-        train_spec = tf.estimator.TrainSpec(
-            lambda: self.train.input_fn(),
-            max_steps=self.config["num_epochs"] * steps_pre_epoch,
-        )
-
-        eval_spec = tf.estimator.EvalSpec(lambda: self.val.input_fn())
-
-        # initialise a wrapper to do training and evaluation, this also handles exporting checkpoints/tensorboard info
-        tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
-
-        # after training export the final model for use in tensorflow serving
-        self._export_model(estimator, self.config["export_path"])
+        # train and evaluate model
+        self._train_and_evaluate()
 
         # get results after training and exporting model
-        self._predict(estimator, self.pred.input_fn)
+        self._predict()
 
-    def _export_model(
-        self, estimator: tf.estimator.Estimator, save_location: str
-    ) -> None:
-        """
-        Used to export your model in a format that can be used with
-        Tf.Serving
-        :param estimator: your estimator function
-        """
-        # this should match the input shape of your model
-        # TODO: update this to your input used in prediction/serving
-        x1 = tf.feature_column.numeric_column(
-            "input", shape=[self.config["batch_size"], 28, 28, 1]
-        )
-        # create a list in case you have more than one input
-        feature_columns = [x1]
-        feature_spec = tf.feature_column.make_parse_example_spec(feature_columns)
-        export_input_fn = tf.estimator.export.build_parsing_serving_input_receiver_fn(
-            feature_spec
-        )
-        # export the saved model
-        estimator.export_savedmodel(save_location, export_input_fn)
+        # after training export the final model for use in tensorflow serving
+        self._export_model()
 
-    def _predict(self, estimator: tf.estimator.Estimator, pred_fn: Callable) -> list:
+    def _export_model(self) -> None:
+        tf.keras.experimental.export_saved_model(self.model, self.config["export_dir"])
+
+    def _predict(self) -> list:
         """
         Function to yield prediction results from the model
-        :param estimator: your estimator function
-        :param pred_fn: input_fn associated with prediction dataset
         :return: a list containing a prediction for each batch in the dataset
         """
         pass
+
+    def train_one_step(self, model, optimizer, x, y):
+        with tf.GradientTape() as tape:
+            logits = model(x)
+            loss = self.compute_loss(y, logits)
+
+        grads = tape.gradient(loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables))
+
+        self.compute_accuracy(y, logits)
+        return loss
+
+    def trainer(self, model, optimizer):
+        step = 0
+        loss = 0.0
+        accuracy = 0.0
+        for x, y in self.train.input_fn():
+            step += 1
+            loss = self.train_one_step(model, optimizer, x, y)
+            if tf.equal(step % 10, 0):
+                tf.print('Step', step, ': loss', loss, '; accuracy',
+                         self.compute_accuracy.result())
+        return step, loss, accuracy
+
+    def _train_and_evaluate(self):
+        checkpoint_dir = self.config["job_dir"]
+        if os.path.isfile(os.path.join(checkpoint_dir, "checkpoint")):
+            self.model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
+
+        checkpoint_path = os.path.join(checkpoint_dir, "cp-{epoch:04d}.ckpt")
+        self.model.save_weights(checkpoint_path.format(epoch=0))
+
+        # Run evaluation every 10 epochs
+        steps_per_epoch = len(self.train) / self.config['batch_size']
+
+        if self.config['debug']:
+            step, loss, accuracy = self.trainer(self.model, self.optimizer)
+            print('Final step', step, ': loss', loss, '; accuracy', self.compute_accuracy.result())
+        else:
+            callbacks = [
+                K.callbacks.ModelCheckpoint(
+                    filepath=checkpoint_path, save_weights_only=True,
+                    verbose=1, period=5
+                ),
+                K.callbacks.TensorBoard(
+                    log_dir=self.config["job_dir"],
+                    histogram_freq=0,
+                    write_graph=True,
+                    write_images=True,
+                ),
+            ]
+            self.model.compile(
+                optimizer=self.optimizer, loss=self.compute_loss,
+                metrics=['accuracy'])
+
+            history = self.model.fit(
+                x=self.train.input_fn(),
+                epochs=self.config["train_epochs"],
+                verbose=1,
+                callbacks=callbacks,
+                validation_data=self.val.input_fn(),
+                initial_epoch=0,
+                validation_freq=10,
+                steps_per_epoch=steps_per_epoch
+            )

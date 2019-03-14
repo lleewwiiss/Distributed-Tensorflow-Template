@@ -13,5 +13,6 @@ exclude = '''
   | buck-out
   | build
   | dist
+  | pxp
 )/
 '''

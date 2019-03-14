@@ -1,7 +1,9 @@
 from data_loader.data_loader import TFRecordDataLoader
-from models.model import RawModel
+from models.model import MNIST
 from trainers.train import RawTrainer
-from utils.utils import get_args, process_config
+from utils.utils import get_args
+from utils import hyper_parameters
+import tensorflow_datasets as tfds
 
 
 def init() -> None:
@@ -11,19 +13,22 @@ def init() -> None:
     """
     # get input arguments
     args = get_args()
-    # get static config information
-    config = process_config()
+    # get hyper parameters
+    params = hyper_parameters.HP
     # combine both into dictionary
-    config = {**config, **args}
+    config = {**params, **args}
+
+    mnist_builder = tfds.builder("mnist")
+    mnist_builder.download_and_prepare()
+    # create your data generators for each mode
+    train_data = TFRecordDataLoader(config, mode="train", mnist=mnist_builder)
+
+    val_data = TFRecordDataLoader(config, mode="val", mnist=mnist_builder)
+
+    test_data = TFRecordDataLoader(config, mode="test", mnist=mnist_builder)
 
     # initialise model
-    model = RawModel(config)
-    # create your data generators for each mode
-    train_data = TFRecordDataLoader(config, mode="train")
-
-    val_data = TFRecordDataLoader(config, mode="val")
-
-    test_data = TFRecordDataLoader(config, mode="test")
+    model = MNIST(config)
 
     # initialise the estimator
     trainer = RawTrainer(config, model, train_data, val_data, test_data)

@@ -1,12 +1,12 @@
 from base.data_loader import DataLoader
 import tensorflow as tf
-import multiprocessing
 from typing import Tuple, Dict
 import random
+import tensorflow_datasets as tfds
 
 
 class TFRecordDataLoader(DataLoader):
-    def __init__(self, config: dict, mode: str) -> None:
+    def __init__(self, config: dict, mode: str, mnist) -> None:
         """
         An example of how to create a dataset using tfrecords inputs
         :param config: global configuration
@@ -16,13 +16,13 @@ class TFRecordDataLoader(DataLoader):
 
         # Get a list of files in case you are using multiple tfrecords
         if self.mode == "train":
-            self.file_names = self.config["train_files"]
-            self.batch_size = self.config["train_batch_size"]
+            self.data = mnist.as_dataset(split=tfds.Split.TRAIN, as_supervised=True)
+            self.batch_size = self.config["batch_size"]
         elif self.mode == "val":
-            self.file_names = self.config["eval_files"]
-            self.batch_size = self.config["eval_batch_size"]
+            self.data = mnist.as_dataset(split=tfds.Split.TEST, as_supervised=True)
+            self.batch_size = self.config["batch_size"]
         else:
-            self.file_names = self.config["test_files"]
+            self.data = mnist.as_dataset(split=tfds.Split.TEST, as_supervised=True)
 
     def input_fn(self) -> tf.data.Dataset:
         """
@@ -31,24 +31,26 @@ class TFRecordDataLoader(DataLoader):
         reduce bottle necking of operations on the GPU
         :return: a Dataset function
         """
-        dataset = tf.data.TFRecordDataset(self.file_names)
-        # create a parallel parsing function based on number of cpu cores
-        dataset = dataset.map(
-            map_func=self._parse_example, num_parallel_calls=multiprocessing.cpu_count()
-        )
+        dataset = self.data
 
+        def convert_types(image, label):
+            image = tf.cast(image, tf.float32)
+            image /= 255
+            return image, label
+
+        dataset = dataset.map(convert_types)
         # only shuffle training data
         if self.mode == "train":
-            # shuffles and repeats a Dataset returning a new permutation for each epoch. with serialised compatibility
             dataset = dataset.apply(
-                tf.contrib.data.shuffle_and_repeat(
-                    buffer_size=len(self) // self.config["train_batch_size"]
+                tf.data.experimental.shuffle_and_repeat(
+                    buffer_size=1000
                 )
             )
         else:
-            dataset = dataset.repeat(self.config["num_epochs"])
+            dataset = dataset.repeat(1)
         # create batches of data
         dataset = dataset.batch(batch_size=self.batch_size)
+        dataset = dataset.prefetch(buffer_size=1000)
         return dataset
 
     def _parse_example(
@@ -57,7 +59,7 @@ class TFRecordDataLoader(DataLoader):
         """
         Used to read in a single example from a tf record file and do any augmentations necessary
         :param example: the tfrecord for to read the data from
-        :return: a parsed input example and its respective label
+        :return: a parsed input example and its respective lab el
         """
         # do parsing on the cpu
         with tf.device("/cpu:0"):
@@ -106,6 +108,4 @@ class TFRecordDataLoader(DataLoader):
         Get number of records in the dataset
         :return: number of samples in all tfrecord files
         """
-        return sum(
-            1 for fn in self.file_names for _ in tf.python_io.tf_record_iterator(fn)
-        )
+        return sum(1 for _ in self.data)

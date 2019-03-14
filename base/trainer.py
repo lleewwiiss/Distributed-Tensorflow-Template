@@ -1,13 +1,12 @@
-import tensorflow as tf
-from base import data_loader, model
-from typing import Callable
+import tensorflow.keras as K
+from base import data_loader
 
 
-class BaseTrain:
+class BaseTrain(object):
     def __init__(
         self,
         config: dict,
-        model: model.BaseModel,
+        model: K.Model,
         train: data_loader.DataLoader,
         val: data_loader.DataLoader,
         pred: data_loader.DataLoader,
@@ -34,21 +33,16 @@ class BaseTrain:
         """
         raise NotImplementedError
 
-    def _export_model(
-        self, estimator: tf.estimator.Estimator, save_location: str
-    ) -> None:
+    def _export_model(self) -> None:
         """
         Used to export your model in a format that can be used with
         Tf.Serving
-        :param estimator: your estimator function
         """
         raise NotImplementedError
 
-    def _predict(self, estimator: tf.estimator.Estimator, pred_fn: Callable) -> list:
+    def _predict(self) -> list:
         """
         Function to yield prediction results from the model
-        :param estimator: your estimator function
-        :param pred_fn: input_fn associated with prediction dataset
         :return: a list containing a prediction for each batch in the dataset
         """
         raise NotImplementedError
