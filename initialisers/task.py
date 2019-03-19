@@ -1,3 +1,4 @@
+from comet_ml import Experiment
 from data_loader.data_loader import TFRecordDataLoader
 from models.model import MNIST
 from trainers.train import RawTrainer
@@ -30,8 +31,17 @@ def init() -> None:
     # initialise model
     model = MNIST(config)
 
+    experiment = Experiment(
+        api_key="aDtg3VjYKrdFVclZwQfnYYNNj",
+        project_name=config["project_name"],
+        workspace="maxwell",
+        auto_param_logging=False,
+    )
+
+    experiment.log_parameters(config)
+
     # initialise the estimator
-    trainer = RawTrainer(config, model, train_data, val_data, test_data)
+    trainer = RawTrainer(config, model, experiment, train_data, val_data, test_data)
 
     # start training
     trainer.run()

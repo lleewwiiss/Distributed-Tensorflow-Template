@@ -9,12 +9,12 @@ class MNIST(K.Model):
         """
         super().__init__()
         self.config = config
-        self.conv1 = KL.Conv2D(32, 3, activation='relu')
+        self.conv1 = KL.Conv2D(32, 3, activation="relu")
         self.flatten = KL.Flatten()
-        self.d1 = KL.Dense(128, activation='relu')
-        self.d2 = KL.Dense(10, activation='softmax')
+        self.d1 = KL.Dense(128, activation="relu")
+        self.d2 = KL.Dense(10, activation="softmax")
 
-    def call(self, x):
+    def call(self, x: K.Tensor) -> KL.Layer:
         x = self.conv1(x)
         x = self.flatten(x)
         x = self.d1(x)

@@ -1,6 +1,6 @@
+from comet_ml import Experiment
 from base.trainer import BaseTrain
 import tensorflow.keras as K
-from comet_ml import Experiment
 from models.model import MNIST
 from data_loader.data_loader import TFRecordDataLoader
 import tensorflow as tf
@@ -12,6 +12,7 @@ class RawTrainer(BaseTrain):
         self,
         config: dict,
         model: MNIST,
+        experiment: Experiment,
         train: TFRecordDataLoader,
         val: TFRecordDataLoader,
         pred: TFRecordDataLoader,
@@ -27,16 +28,7 @@ class RawTrainer(BaseTrain):
         :param pred: the prediction dataset
         """
         super().__init__(config, model, train, val, pred)
-        self.compute_loss = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True)
-        self.optimizer = K.optimizers.Adam()
-        self.compute_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
-        self.experiment = Experiment(
-            api_key="NAoCVwaFTcgOltYJJs1wimcnZ",
-            project_name="template",
-            workspace="maxwell",
-            auto_param_logging=False)
-        self.experiment.log_paraters(self.config)
+        self.experiment = experiment
 
     def run(self) -> None:
 
@@ -54,10 +46,10 @@ class RawTrainer(BaseTrain):
             model=self.model,
             saved_model_path=self.config["export_dir"],
             input_signature=None,
-            serving_only=True
+            serving_only=True,
         )
 
-    def _predict(self) -> list:
+    def _predict(self) -> None:
         """
         Function to yield prediction results from the model
         :return: a list containing a prediction for each batch in the dataset
@@ -65,7 +57,7 @@ class RawTrainer(BaseTrain):
         with self.experiment.test():
             pass
 
-    def _train_and_evaluate(self):
+    def _train_and_evaluate(self) -> None:
         checkpoint_dir = self.config["job_dir"]
         if os.path.isfile(os.path.join(checkpoint_dir, "checkpoint")):
             self.model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
@@ -74,12 +66,11 @@ class RawTrainer(BaseTrain):
         self.model.save_weights(checkpoint_path.format(epoch=0))
 
         # Run evaluation every 10 epochs
-        steps_per_epoch = len(self.train) / self.config['batch_size']
+        steps_per_epoch = len(self.train) / self.config["batch_size"]
 
         callbacks = [
             K.callbacks.ModelCheckpoint(
-                filepath=checkpoint_path, save_weights_only=True,
-                verbose=1, period=5
+                filepath=checkpoint_path, save_weights_only=True, verbose=1, period=5
             ),
             K.callbacks.TensorBoard(
                 log_dir=self.config["job_dir"],
@@ -88,14 +79,21 @@ class RawTrainer(BaseTrain):
                 write_images=True,
             ),
         ]
+
+        # mirrored_strategy = tf.distribute.MirroredStrategy()
+        # with mirrored_strategy.scope():
+        compute_loss = K.losses.SparseCategoricalCrossentropy(from_logits=True)
+        optimizer = K.optimizers.Adam()
+
         self.model.compile(
-            optimizer=self.optimizer,
-            loss=self.compute_loss,
-            metrics=['accuracy'],
-            run_eagerly=self.config['debug'])
+            optimizer=optimizer,
+            loss=compute_loss,
+            metrics=["accuracy"],
+            run_eagerly=self.config["debug"],
+        )
 
         with self.experiment.train():
-            history = self.model.fit(
+            self.model.fit(
                 x=self.train.input_fn(),
                 epochs=self.config["train_epochs"],
                 verbose=1,
@@ -103,5 +101,5 @@ class RawTrainer(BaseTrain):
                 validation_data=self.val.input_fn(),
                 initial_epoch=0,
                 validation_freq=10,
-                steps_per_epoch=steps_per_epoch
+                steps_per_epoch=steps_per_epoch,
             )
