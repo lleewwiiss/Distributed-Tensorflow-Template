@@ -1,5 +1,6 @@
 from base.trainer import BaseTrain
 import tensorflow.keras as K
+from comet_ml import Experiment
 from models.model import MNIST
 from data_loader.data_loader import TFRecordDataLoader
 import tensorflow as tf
@@ -30,6 +31,12 @@ class RawTrainer(BaseTrain):
             from_logits=True)
         self.optimizer = K.optimizers.Adam()
         self.compute_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
+        self.experiment = Experiment(
+            api_key="NAoCVwaFTcgOltYJJs1wimcnZ",
+            project_name="template",
+            workspace="maxwell",
+            auto_param_logging=False)
+        self.experiment.log_paraters(self.config)
 
     def run(self) -> None:
 
@@ -43,37 +50,20 @@ class RawTrainer(BaseTrain):
         self._export_model()
 
     def _export_model(self) -> None:
-        tf.keras.experimental.export_saved_model(self.model, self.config["export_dir"])
+        tf.keras.experimental.export_saved_model(
+            model=self.model,
+            saved_model_path=self.config["export_dir"],
+            input_signature=None,
+            serving_only=True
+        )
 
     def _predict(self) -> list:
         """
         Function to yield prediction results from the model
         :return: a list containing a prediction for each batch in the dataset
         """
-        pass
-
-    def train_one_step(self, model, optimizer, x, y):
-        with tf.GradientTape() as tape:
-            logits = model(x)
-            loss = self.compute_loss(y, logits)
-
-        grads = tape.gradient(loss, model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-        self.compute_accuracy(y, logits)
-        return loss
-
-    def trainer(self, model, optimizer):
-        step = 0
-        loss = 0.0
-        accuracy = 0.0
-        for x, y in self.train.input_fn():
-            step += 1
-            loss = self.train_one_step(model, optimizer, x, y)
-            if tf.equal(step % 10, 0):
-                tf.print('Step', step, ': loss', loss, '; accuracy',
-                         self.compute_accuracy.result())
-        return step, loss, accuracy
+        with self.experiment.test():
+            pass
 
     def _train_and_evaluate(self):
         checkpoint_dir = self.config["job_dir"]
@@ -86,26 +76,25 @@ class RawTrainer(BaseTrain):
         # Run evaluation every 10 epochs
         steps_per_epoch = len(self.train) / self.config['batch_size']
 
-        if self.config['debug']:
-            step, loss, accuracy = self.trainer(self.model, self.optimizer)
-            print('Final step', step, ': loss', loss, '; accuracy', self.compute_accuracy.result())
-        else:
-            callbacks = [
-                K.callbacks.ModelCheckpoint(
-                    filepath=checkpoint_path, save_weights_only=True,
-                    verbose=1, period=5
-                ),
-                K.callbacks.TensorBoard(
-                    log_dir=self.config["job_dir"],
-                    histogram_freq=0,
-                    write_graph=True,
-                    write_images=True,
-                ),
-            ]
-            self.model.compile(
-                optimizer=self.optimizer, loss=self.compute_loss,
-                metrics=['accuracy'])
+        callbacks = [
+            K.callbacks.ModelCheckpoint(
+                filepath=checkpoint_path, save_weights_only=True,
+                verbose=1, period=5
+            ),
+            K.callbacks.TensorBoard(
+                log_dir=self.config["job_dir"],
+                histogram_freq=steps_per_epoch,
+                write_graph=True,
+                write_images=True,
+            ),
+        ]
+        self.model.compile(
+            optimizer=self.optimizer,
+            loss=self.compute_loss,
+            metrics=['accuracy'],
+            run_eagerly=self.config['debug'])
 
+        with self.experiment.train():
             history = self.model.fit(
                 x=self.train.input_fn(),
                 epochs=self.config["train_epochs"],
